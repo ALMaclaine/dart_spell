@@ -4,6 +4,7 @@ import 'dart:collection';
 
 import 'package:spell_checker/utilities.dart';
 
+
 ///
 /// Simple dictionary based spell checker.
 ///
@@ -92,7 +93,9 @@ class SingleWordSpellChecker {
     return newHypotheses;
   }
 
-  Set<_Hypothesis> _handleNearKey(
+
+
+Set<_Hypothesis> _handleNearKey(
       _Hypothesis hypothesis, String input, _Node childNode) {
     final nextIndex = hypothesis.index + 1;
     final newHypotheses = <_Hypothesis>{};
@@ -101,7 +104,7 @@ class SingleWordSpellChecker {
     if (childNode.chr != nextChar) {
       final nearCharactersString = nearKeyMap[childNode.chr];
       if (nearCharactersString != null &&
-          nearCharactersString.containsCodeUnit(nextChar)) {
+          nearCharactersString.runes.contains(nextChar)) {
         //NEAR_KEY_SUBSTITUTION_PENALTY;
       }
     }
