@@ -19,30 +19,34 @@ class SingleWordSpellChecker {
   //TODO: not used yet.
   final double NEAR_KEY_SUBSTITUTION_PENALTY = 0.5;
   final Map<int, String> nearKeyMap = <int, String>{};
-  SplayTreeMap<String, double> hypotheses;
+  SplayTreeMap<String, double>? hypotheses;
 
-  double distance;
-  _Node _root;
+  double? distance;
+  late _Node _root;
 
-  SingleWordSpellChecker({num distance = 1}) {
-    if (distance != null) this.distance = distance;
+  SingleWordSpellChecker({double distance = 1}) {
+    this.distance = distance;
     _root = _Node(0);
   }
 
   void addWord(String word) => _addChar(word, word);
 
-  void addWords(Iterable<String> words) => words?.forEach(addWord);
+  void addWords(Iterable<String>? words) => words?.forEach(addWord);
 
-  void _addChar(String word, String actual) {
+  void _addChar(String? word, String actual) {
     var tmpNode = _root;
-    for (final rune in word?.toLowerCase()?.runes) {
+    if(word==null){
+      print('word is null and therefore will not be added');
+      return;
+    }
+    for (final rune in word.toLowerCase().runes) {
       // TODO: Add tests for this
       // TODO: Make custom exception
       if (!isChar(rune)) {
         throw Exception(
             'Invalid character added to spell checker, code unit: $rune}');
       }
-      tmpNode = tmpNode?.addChild(rune);
+      tmpNode = tmpNode.addChild(rune);
     }
     tmpNode.word = actual;
   }
@@ -68,10 +72,14 @@ class SingleWordSpellChecker {
     var next = _expand(hyp, lowered);
     while (next.isNotEmpty) {
       final expanded = next.map((hyp) => _expand(hyp, lowered));
-      next = expanded.reduce((e, v) => v?.union(e));
+      next = expanded.reduce((e, v) => v.union(e));
     }
 
-    return hypotheses.keys.map((key) => Result(key, hypotheses[key])).toList();
+    if(hypotheses?.keys==null){
+      print('key are null and therefore will send empty list');
+      return List.empty();
+    }
+    return hypotheses!.keys.map((key) => Result(key, hypotheses![key]!)).toList();
   }
 
   Set<_Hypothesis> _noError(_Hypothesis hypothesis, String input) {
@@ -118,7 +126,7 @@ Set<_Hypothesis> _handleNearKey(
     final hypDist = hypothesis.distance;
     final newHypotheses = <_Hypothesis>{};
 
-    if (hypDist + SUBSTITUTION_PENALTY <= distance) {
+    if (hypDist + SUBSTITUTION_PENALTY <= (distance??0)) {
       // TODO consider double add for noError
       final hyp = hypothesis.getNewMoveForward(childNode, SUBSTITUTION_PENALTY);
       if (nextIndex == input.length - 1) {
@@ -205,13 +213,13 @@ Set<_Hypothesis> _handleNearKey(
     newHypotheses.addAll(_noError(hypothesis, input));
 
     // we don't need to explore further if we reached to max penalty
-    if (hypDist >= distance) {
+    if (hypDist >= (distance??0)) {
       return newHypotheses;
     } else {
       newHypotheses.addAll(_substitution(hypothesis, input));
     }
 
-    if (hypDist + DELETION_PENALTY > distance) {
+    if (hypDist + DELETION_PENALTY > (distance??0)) {
       return newHypotheses;
     } else {
       newHypotheses.addAll(_deletion(hypothesis, input));
@@ -227,13 +235,13 @@ Set<_Hypothesis> _handleNearKey(
 
   void _addHypothesis(_Hypothesis hypToAdd) {
     final hypWord = hypToAdd.node.word;
-    if (isNull(hypWord)) return;
-    if (hypotheses.containsKey(hypWord)) {
-      if (hypToAdd.distance < hypotheses[hypWord]) {
-        hypotheses.update(hypWord, (val) => hypToAdd.distance);
+    if (hypWord==null) return;
+    if (hypotheses?.containsKey(hypWord)??false) {
+      if (hypToAdd.distance < hypotheses![hypWord]!) {
+        hypotheses!.update(hypWord, (val) => hypToAdd.distance);
       }
     } else {
-      hypotheses.putIfAbsent(hypWord, () => hypToAdd.distance);
+      if(hypotheses!=null)hypotheses!.putIfAbsent(hypWord, () => hypToAdd.distance);
     }
   }
 }
@@ -242,11 +250,11 @@ class _Node {
   final int chr;
   final Map<int, _Node> nodes = <int, _Node>{};
 
-  String _word;
+  String? _word;
 
-  set word(String word) => _word = word ?? _word;
+  set word(String? word) => _word = word ?? _word;
 
-  String get word => _word;
+  String? get word => _word;
 
   _Node(this.chr);
 
@@ -254,11 +262,11 @@ class _Node {
 
   bool hasChild(int c) => nodes.containsKey(c);
 
-  _Node getChild(int c) => nodes[c];
+  _Node getChild(int c) => nodes[c]!;
 
   _Node addChild(int c) => nodes.putIfAbsent(c, () => _Node(c));
 
-  bool get endsWord => !isNull(_word);
+  bool get endsWord => !(_word==null);
 
   @override
   int get hashCode {
